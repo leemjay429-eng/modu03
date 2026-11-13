@@ -60,6 +60,9 @@ if(location.protocol==='file:'||location.hostname.indexOf('github.io')>-1){
   /* 색 — 남빛(쪽빛) 한 계열 */
   --c-deep:#1d2668; --c-dark:#2a3585; --c-ind:#33409a; --c-mid:#5664b8;
   --c-line:#cdd4ec; --c-ink:#20243a; --c-sub:#4a5070;
+  /* 모션 */
+  --nbd-ease-out:cubic-bezier(.16,1,.3,1);
+  --nbd-ease-wipe:cubic-bezier(.65,0,.35,1);
   font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   font-size:var(--fs-body); line-height:1.6; letter-spacing:-0.02em;
   color:var(--c-ink); word-break:keep-all;
@@ -108,13 +111,147 @@ if(location.protocol==='file:'||location.hostname.indexOf('github.io')>-1){
 .contents_div .nbd-sec--two .nbd-h2{ letter-spacing:-0.03em; }
 .contents_div .nbd-p{ margin-top:18px; font-size:var(--fs-lead); line-height:1.6; }
 
-/* ===== 히어로 ===== */
-.contents_div .nbd-hero{ position:relative; width:100%; overflow:hidden; background:#eee; }
-.contents_div .nbd-hero::before{ content:''; display:block; padding-top:98.75%; }   /* 원본 1600×1580 */
-.contents_div .nbd-hero img{
-  position:absolute; inset:0; width:100%; height:100%;
-  object-fit:cover; object-position:center;
+/* ===== 히어로 (레이어 모션) ===== */
+/* 히어로: 원본 1600×1580 비율 그대로, 최대 800px */
+.contents_div .nbd-hero{
+  position:relative; width:100%; margin:0; padding:0;
 }
+.contents_div .nbd-stage{
+  position:relative; width:100%;
+  aspect-ratio:1600 / 1580;
+  overflow:hidden;
+  background:#5664b9;          /* 배경 이미지 로드 전 단색 */
+  isolation:isolate;
+}
+
+/* 레이어 공통: 원본 캔버스 전체를 겹쳐 놓는다 */
+.contents_div .nbd-lyr{
+  position:absolute; inset:0;
+  transform-origin:var(--nbd-o, 50% 50%);
+}
+.contents_div .nbd-lyr > img{
+  position:absolute; inset:0;
+  display:block; width:100%; height:100%;
+  max-width:none; margin:0; border:0;
+  object-fit:contain;
+  transform-origin:var(--nbd-o, 50% 50%);
+  -webkit-user-select:none; user-select:none; pointer-events:none;
+  -webkit-backface-visibility:hidden; backface-visibility:hidden;
+}
+
+/* 배경 */
+.contents_div .nbd-lyr--bg > img{ object-fit:cover; }
+
+/* ---- 클리핑 영역 (원본 1600×1580 기준 %) ---- */
+.contents_div .nbd-el-tl{ --nbd-o:21.25% 17.41%; }
+.contents_div .nbd-el-tl > img{ clip-path:inset(1.27% 59.38% 66.46% 1.88%); }
+.contents_div .nbd-el-tr{ --nbd-o:81.25% 15.82%; }
+.contents_div .nbd-el-tr > img{ clip-path:inset(0% 0% 68.35% 62.5%); }
+.contents_div .nbd-el-bl{ --nbd-o:18.75% 80.38%; }
+.contents_div .nbd-el-bl > img{ clip-path:inset(60.76% 62.5% 0% 0%); }
+.contents_div .nbd-el-br{ --nbd-o:79.06% 79.75%; }
+.contents_div .nbd-el-br > img{ clip-path:inset(59.49% 0% 0% 58.13%); }
+
+.contents_div .nbd-tx-sub{ --nbd-o:50.31% 37.8%; }
+.contents_div .nbd-tx-sub > img{ clip-path:inset(34.18% 18.75% 58.48% 19.38%); }
+.contents_div .nbd-tx-title{ --nbd-o:50.31% 53.67%; }
+.contents_div .nbd-tx-title > img{ clip-path:inset(41.52% 15.62% 34.18% 16.25%); }
+.contents_div .nbd-tx-spark{ --nbd-o:8.75% 44.3%; }
+.contents_div .nbd-tx-spark > img{ clip-path:inset(37.66% 86.25% 49.05% 3.75%); }
+.contents_div .nbd-tx-squig{ --nbd-o:90% 47.47%; }
+.contents_div .nbd-tx-squig > img{ clip-path:inset(42.41% 5.31% 47.47% 85.31%); }
+
+/* ---- 대기 상태: JS가 준비되면(nbd-ready) 숨겨두고, 뷰포트 30% 진입(nbd-on) 시 재생 ---- */
+.contents_div .nbd-hero.nbd-ready:not(.nbd-on) .nbd-anim{ opacity:0; }
+
+/* 배경: 확대 → 원래 크기 */
+.contents_div .nbd-hero.nbd-on .nbd-lyr--bg > img{ animation:nbd-bg-in 2.2s var(--nbd-ease-out) both, nbd-bg-drift 14s ease-in-out 2.2s infinite alternate; }
+
+/* 요소: 각 모서리 쪽에서 짧게 미끄러지며 나타남 (회전·튕김 없음) */
+.contents_div .nbd-hero.nbd-on .nbd-el-tl{ --nbd-fx:-3%; --nbd-fy:-2%; animation:nbd-in-el 1.4s var(--nbd-ease-out) .1s both; }
+.contents_div .nbd-hero.nbd-on .nbd-el-tr{ --nbd-fx:3%;  --nbd-fy:-2%; animation:nbd-in-el 1.4s var(--nbd-ease-out) .22s both; }
+.contents_div .nbd-hero.nbd-on .nbd-el-bl{ --nbd-fx:-3%; --nbd-fy:2%;  animation:nbd-in-el 1.4s var(--nbd-ease-out) .34s both; }
+.contents_div .nbd-hero.nbd-on .nbd-el-br{ --nbd-fx:3%;  --nbd-fy:2%;  animation:nbd-in-el 1.4s var(--nbd-ease-out) .46s both; }
+
+/* 서브 문구: 왼쪽에서 오른쪽으로 닦아내듯 드러남 */
+.contents_div .nbd-hero.nbd-on .nbd-tx-sub{ animation:nbd-in-fade .9s var(--nbd-ease-out) .6s both; }
+.contents_div .nbd-hero.nbd-on .nbd-tx-sub > img{ animation:nbd-wipe-sub 1s var(--nbd-ease-wipe) .6s both; }
+
+/* 메인 타이틀: 흐림 → 선명, 살짝 큰 상태에서 제자리로 */
+.contents_div .nbd-hero.nbd-on .nbd-tx-title{ animation:nbd-in-title 1.5s var(--nbd-ease-out) .85s both; }
+
+/* 별: 회전 없이 크기만 */
+.contents_div .nbd-hero.nbd-on .nbd-tx-spark{ animation:nbd-in-spark .9s var(--nbd-ease-out) 1.5s both; }
+/* 물결: 그려지듯 왼쪽부터 드러남 */
+.contents_div .nbd-hero.nbd-on .nbd-tx-squig{ animation:nbd-in-fade .3s linear 1.6s both; }
+.contents_div .nbd-hero.nbd-on .nbd-tx-squig > img{ animation:nbd-wipe-squig .9s var(--nbd-ease-wipe) 1.6s both, nbd-squig-loop 6s linear 2.5s infinite; }
+
+/* 진입 후 반복 모션: 작고 느리게 */
+.contents_div .nbd-hero.nbd-on .nbd-el-tl > img{ animation:nbd-drift 4.6s ease-in-out 1.5s infinite alternate; }
+.contents_div .nbd-hero.nbd-on .nbd-el-tr > img{ animation:nbd-float 5.2s ease-in-out 1.6s infinite alternate; }
+.contents_div .nbd-hero.nbd-on .nbd-el-bl > img{ animation:nbd-float 4.9s ease-in-out 1.7s infinite alternate; }
+.contents_div .nbd-hero.nbd-on .nbd-el-br > img{ animation:nbd-sway 6s linear 1.9s infinite; }
+.contents_div .nbd-hero.nbd-on .nbd-tx-title > img{ animation:nbd-breathe 5s ease-in-out 2.4s infinite alternate; }
+.contents_div .nbd-hero.nbd-on .nbd-tx-spark > img{ animation:nbd-glint 2.8s var(--nbd-ease-out) 2.6s infinite; }
+
+/* 화면 밖으로 나가면 반복 모션 일시정지 */
+.contents_div .nbd-hero.nbd-off .nbd-lyr > img{ animation-play-state:paused; }
+
+/* ---- 키프레임 (이동값은 원본 캔버스 대비 %) ---- */
+@keyframes nbd-bg-in{ from{ transform:scale(1.15); } to{ transform:none; } }
+@keyframes nbd-in-el{
+  from{ opacity:0; transform:translate(var(--nbd-fx,0), var(--nbd-fy,0)); }
+  to  { opacity:1; transform:none; }
+}
+@keyframes nbd-in-fade{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes nbd-wipe-sub{
+  from{ clip-path:inset(34.18% 80.62% 58.48% 19.38%); transform:translateX(-1%); }
+  to  { clip-path:inset(34.18% 18.75% 58.48% 19.38%); transform:none; }
+}
+@keyframes nbd-wipe-squig{
+  from{ clip-path:inset(42.41% 14.69% 47.47% 85.31%); }
+  to  { clip-path:inset(42.41% 5.31% 47.47% 85.31%); }
+}
+@keyframes nbd-in-title{
+  from{ opacity:0; transform:scale(1.06); filter:blur(10px); }
+  to  { opacity:1; transform:none; filter:blur(0); }
+}
+@keyframes nbd-in-spark{ from{ opacity:0; transform:scale(.4); } to{ opacity:1; transform:none; } }
+
+@keyframes nbd-bg-drift{ from{ transform:scale(1); } to{ transform:scale(1.05); } }
+@keyframes nbd-float{ from{ transform:translateY(0); } to{ transform:translateY(-.8%); } }
+@keyframes nbd-drift{ from{ transform:translate(0,0); } to{ transform:translate(.4%,-.8%); } }
+@keyframes nbd-breathe{ from{ transform:scale(1); } to{ transform:scale(1.025); } }
+/* 물결: 오른쪽으로 사라졌다가 다시 왼쪽부터 그려짐 */
+@keyframes nbd-squig-loop{
+  0%, 62%{ clip-path:inset(42.41% 5.31% 47.47% 85.31%); animation-timing-function:cubic-bezier(.65,0,.35,1); }
+  76%    { clip-path:inset(42.41% 5.31% 47.47% 94.69%); }
+  76.01% { clip-path:inset(42.41% 14.69% 47.47% 85.31%); animation-timing-function:cubic-bezier(.65,0,.35,1); }
+  92%,100%{ clip-path:inset(42.41% 5.31% 47.47% 85.31%); }
+}
+/* 사인파 흐름: 가운데는 멈추지 않고 지나가고, 양끝에서만 부드럽게 감속 */
+@keyframes nbd-sway{
+  0%  { transform:translateX(0);     animation-timing-function:cubic-bezier(.61,1,.88,1); }
+  25% { transform:translateX(-.7%);  animation-timing-function:cubic-bezier(.12,0,.39,0); }
+  50% { transform:translateX(0);     animation-timing-function:cubic-bezier(.61,1,.88,1); }
+  75% { transform:translateX(.7%);   animation-timing-function:cubic-bezier(.12,0,.39,0); }
+  100%{ transform:translateX(0); }
+}
+/* 별 반짝임: 대부분 가만히 있다가 짧게 한 번 반짝 */
+@keyframes nbd-glint{
+  0%, 70%, 100%{ transform:scale(1); }
+  78%{ transform:scale(.72); }
+  88%{ transform:scale(1.12); }
+}
+
+/* ===== 스크롤 등장 (내비 아래 콘텐츠) ===== */
+.contents_div .nbd-wrap.nbd-rv-ready .nbd-rv{
+  opacity:0; transform:translateY(18px);
+  transition:opacity .8s var(--nbd-ease-out) var(--nbd-rv-d,0s), transform .9s var(--nbd-ease-out) var(--nbd-rv-d,0s);
+}
+.contents_div .nbd-wrap.nbd-rv-ready .nbd-rv.is-in{ opacity:1; transform:none; }
+/* 푸터 태그: 이동 없이 짧게 페이드 — 페이지 끝이라 늦게 뜨지 않도록 */
+.contents_div .nbd-wrap.nbd-rv-ready .nbd-tag.nbd-rv{ transform:none; transition:opacity .5s ease-out var(--nbd-rv-d,0s); }
 
 /* ===== 앵커 내비 ===== */
 .contents_div .nbd-nav{ width:100%; padding:0 var(--gut); background:var(--c-deep); }
@@ -344,13 +481,74 @@ if(location.protocol==='file:'||location.hostname.indexOf('github.io')>-1){
   .contents_div .nbd-br--mo-wide{ display:none; }
   .contents_div .nbd-br--m420{ display:inline; }
 }
+/* 움직임 줄이기 설정 사용자: 완성 화면 그대로 */
+@media (prefers-reduced-motion:reduce){
+  .contents_div .nbd-wrap.nbd-rv-ready .nbd-rv{ opacity:1 !important; transform:none !important; transition:none !important; }
+  .contents_div .nbd-hero .nbd-lyr,
+  .contents_div .nbd-hero .nbd-lyr > img{ animation:none !important; opacity:1 !important; transform:none !important; filter:none !important; }
+}
 </style>
 
 <article class="nbd-wrap">
 
+<!-- TEST: 확인 후 이 줄 삭제 -->
+<div class="jngj-test-spacer" aria-hidden="true" style="height:900px;max-width:800px;margin:auto;display:grid;place-items:center;border:1px solid #cb9;background:linear-gradient(to top right,#0000 calc(50% - 1px),#cb9,#0000 calc(50% + 1px)),linear-gradient(to top left,#0000 calc(50% - 1px),#cb9,#0000 calc(50% + 1px)) #fffdef;font:700 16px sans-serif;color:#7E5E50"><b style="padding:10px 20px;background:#fffdef;border:1px solid #cb9;border-radius:99px">
+  테스트 영역 · 아래로 스크롤 ↓</b></div>
+<!-- TEST: 확인 후 이 줄 삭제  -->
   <!-- 히어로 -->
   <div class="nbd-hero">
-    <img src="img/hero.webp" alt="" width="1600" height="1580" fetchpriority="high" loading="eager" decoding="async">
+  <figure class="nbd-stage">
+        <!-- 배경 -->
+        <div class="nbd-lyr nbd-lyr--bg">
+          <img
+            src="img/히어로배경.webp"
+            width="1600" height="1580" alt="" fetchpriority="high" loading="eager" decoding="async">
+        </div>
+
+        <!-- 요소 (히어로요소.webp 한 장을 4구역 클리핑) -->
+        <div class="nbd-lyr nbd-anim nbd-el-tl">
+          <img
+            src="img/히어로요소.webp"
+            width="1600" height="1580" alt="아이와 블록을 쌓는 돌봄 선생님, 어르신 혈압을 재는 간호사, 어르신께 도시락을 전하는 봉사자, 휠체어를 탄 어르신을 돕는 요양보호사 일러스트" fetchpriority="high" loading="eager" decoding="async">
+        </div>
+        <div class="nbd-lyr nbd-anim nbd-el-tr" aria-hidden="true">
+          <img
+            src="img/히어로요소.webp"
+            width="1600" height="1580" alt="" fetchpriority="high" loading="eager" decoding="async">
+        </div>
+        <div class="nbd-lyr nbd-anim nbd-el-bl" aria-hidden="true">
+          <img
+            src="img/히어로요소.webp"
+            width="1600" height="1580" alt="" fetchpriority="high" loading="eager" decoding="async">
+        </div>
+        <div class="nbd-lyr nbd-anim nbd-el-br" aria-hidden="true">
+          <img
+            src="img/히어로요소.webp"
+            width="1600" height="1580" alt="" fetchpriority="high" loading="eager" decoding="async">
+        </div>
+
+        <!-- 텍스트 (히어로텍스트.webp 한 장을 4구역 클리핑) -->
+        <div class="nbd-lyr nbd-anim nbd-tx-sub" aria-hidden="true">
+          <img
+            src="img/히어로텍스트.webp"
+            width="1600" height="1580" alt="" fetchpriority="high" loading="eager" decoding="async">
+        </div>
+        <div class="nbd-lyr nbd-anim nbd-tx-title">
+          <img
+            src="img/히어로텍스트.webp"
+            width="1600" height="1580" alt="전남광주 시민 누구나 돌봄이 필요한 순간, 남빛돌봄" fetchpriority="high" loading="eager" decoding="async">
+        </div>
+        <div class="nbd-lyr nbd-anim nbd-tx-spark" aria-hidden="true">
+          <img
+            src="img/히어로텍스트.webp"
+            width="1600" height="1580" alt="" fetchpriority="high" loading="eager" decoding="async">
+        </div>
+        <div class="nbd-lyr nbd-anim nbd-tx-squig" aria-hidden="true">
+          <img
+            src="img/히어로텍스트.webp"
+            width="1600" height="1580" alt="" fetchpriority="high" loading="eager" decoding="async">
+        </div>
+      </figure>
   </div>
 
   <!-- 앵커 내비 -->
@@ -498,7 +696,90 @@ if(location.protocol==='file:'||location.hostname.indexOf('github.io')>-1){
     });
   });
 
+  /* ---- 히어로 모션 ---- */
+  var hero = root.querySelector('.nbd-hero');
+  if(hero){
+    if(!('IntersectionObserver' in window)){
+      hero.classList.add('nbd-on');
+    }else{
+      hero.classList.add('nbd-ready');
+      var ioPlay = new IntersectionObserver(function(entries){
+        for(var i = 0; i < entries.length; i++){
+          if(entries[i].isIntersecting && entries[i].intersectionRatio >= 0.3){
+            hero.classList.add('nbd-on');
+            ioPlay.disconnect();
+            break;
+          }
+        }
+      }, { threshold:0.3 });
+      ioPlay.observe(hero);
+      var ioPause = new IntersectionObserver(function(entries){
+        var e = entries[entries.length - 1];
+        hero.classList.toggle('nbd-off', !e.isIntersecting);
+      }, { threshold:0 });
+      ioPause.observe(hero);
+    }
+  }
+
   if(!('IntersectionObserver' in window)) return;
+
+  /* ---- 스크롤 등장: 내비 아래 콘텐츠 ---- */
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(!reduce){
+    function mark(list, step){
+      for(var i = 0; i < list.length; i++){
+        list[i].classList.add('nbd-rv');
+        if(step) list[i].style.setProperty('--nbd-rv-d', (i * step).toFixed(2) + 's');
+      }
+    }
+    /* 본문: 요소마다 화면 아래 8% 지점을 지날 때 */
+    var groups = [
+      [root.querySelectorAll('.nbd-intro > *'), .12],
+      [root.querySelectorAll('.nbd-sec--about > *'), .1],
+      [root.querySelectorAll('.nbd-head-tx'), 0],
+      [root.querySelectorAll('.nbd-deco'), 0],
+      [root.querySelectorAll('.nbd-chk'), .1],
+      [root.querySelectorAll('.nbd-tbl'), 0],
+      [root.querySelectorAll('.nbd-step'), .08]
+    ];
+    var body = [];
+    groups.forEach(function(g){ mark(g[0], g[1]); for(var i = 0; i < g[0].length; i++) body.push(g[0][i]); });
+    root.querySelectorAll('.nbd-deco').forEach(function(d){ d.style.setProperty('--nbd-rv-d', '.15s'); });
+
+    /* 푸터: 페이지 맨 끝이라 더 내려갈 스크롤이 없음 →
+       요소 하나하나가 아니라 푸터 전체가 1px이라도 보이면(조금 미리) 한 번에 켠다 */
+    var foot = root.querySelector('.nbd-foot');
+    var footItems = foot ? foot.querySelectorAll('.nbd-outro > *, .nbd-tag') : [];
+    if(foot){
+      mark(foot.querySelectorAll('.nbd-outro > *'), .1);
+      var tags = foot.querySelectorAll('.nbd-tag');
+      for(var t = 0; t < tags.length; t++){
+        tags[t].classList.add('nbd-rv');
+        tags[t].style.setProperty('--nbd-rv-d', (.2 + t * .03).toFixed(2) + 's');
+      }
+    }
+
+    root.classList.add('nbd-rv-ready');
+
+    var ioRv = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(!en.isIntersecting) return;
+        en.target.classList.add('is-in');
+        ioRv.unobserve(en.target);
+      });
+    }, { rootMargin:'0px 0px -8% 0px', threshold:0 });
+    body.forEach(function(el){ ioRv.observe(el); });
+
+    if(foot){
+      var ioFoot = new IntersectionObserver(function(entries){
+        if(!entries[entries.length - 1].isIntersecting) return;
+        for(var k = 0; k < footItems.length; k++) footItems[k].classList.add('is-in');
+        ioFoot.disconnect();
+      }, { rootMargin:'0px 0px 15% 0px', threshold:0 });
+      ioFoot.observe(foot);
+    }
+  }
+
   var secs = root.querySelectorAll('.nbd-sec[id]');
   var io = new IntersectionObserver(function(entries){
     entries.forEach(function(en){
